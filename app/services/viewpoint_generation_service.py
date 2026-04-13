@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from app.domain.models import InputData, DisplayResult
 from app.utils.input_validator import validate_input
 from app.services.prompt_builder import build_system_prompt, build_user_prompt
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class ViewpointGenerationService:
-    def __init__(self) -> None:
-        self._client = OpenAiClient()
+    def __init__(self, client: Optional[OpenAiClient] = None) -> None:
+        self._client = client if client is not None else OpenAiClient()
 
     def generate(self, input_data: InputData) -> DisplayResult:
         validate_input(input_data)
