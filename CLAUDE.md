@@ -120,6 +120,24 @@ docs/                     # 設計書
 設計書（`docs/viewpoint_generation_detailed_design.md`）と既存コードを参照しながら、
 正常系・異常系・境界値を網羅したテストを自動生成する。
 
+### Subagents（役割分担エージェント）
+
+`.claude/agents/` 配下に Subagents を定義済み。
+1エージェント1責務で、調査・レビュー・テスト設計を分業する。
+
+| エージェント | 役割 | 使う場面 |
+|---|---|---|
+| `repo-explorer` | 事前調査 | 実装前の関連箇所把握 |
+| `reviewer` | 差分レビュー | git diff のレビュー |
+| `test-designer` | テスト設計 | テスト観点の整理（実装前） |
+
+**Skills との使い分け**
+
+- Skills（`/pytest-impl`）: 観点が固まったあとの「テスト実装」に使う
+- Subagents: 実装前の「調査・設計・レビュー」に使う
+
+詳細は `.claude/agents/README.md` を参照。
+
 ### MCP（Playwright）
 
 `.mcp.json` に Playwright MCP を設定済み（project-scoped）。

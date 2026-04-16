@@ -85,3 +85,22 @@ class TestBuildUserPrompt:
     def test_contains_json_only_instruction(self, valid_input_data):
         result = build_user_prompt(valid_input_data)
         assert "JSONのみ" in result
+
+    def test_unknown_target_type_uses_raw_value(self):
+        # TARGET_TYPE_LABELS に存在しない target_type は raw 値がそのまま出力に入る
+        # Pydantic のバリデーションを回避するため model_construct() を使用
+        data = InputData.model_construct(
+            target_type="custom_type",
+            spec_text="ユーザーがメールアドレスとパスワードを入力してログインする機能",
+            supplemental_text="",
+        )
+        result = build_user_prompt(data)
+        assert "custom_type" in result
+
+    def test_output_contains_spec_text_section_header(self, valid_input_data):
+        result = build_user_prompt(valid_input_data)
+        assert "【仕様テキスト】" in result
+
+    def test_output_contains_supplemental_section_header(self, valid_input_data):
+        result = build_user_prompt(valid_input_data)
+        assert "【補足情報】" in result
