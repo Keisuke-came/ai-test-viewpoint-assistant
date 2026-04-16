@@ -204,6 +204,18 @@ streamlit run app/streamlit_app.py
 python3 -m pytest tests/ -x -q
 ```
 
+### PostToolUse Hook（自動 pytest）
+
+`.claude/settings.json` に PostToolUse Hook を設定している。
+`app/` または `tests/` 配下の `.py` ファイルを編集するたびに
+`python3 -m pytest tests/ -x -q` が自動実行される。
+詳細は `CLAUDE.md` および `.claude/hooks/run_pytest_on_py_edit.sh` を参照。
+
+### CLAUDE.md によるルール定義
+
+`CLAUDE.md` をプロジェクトルートに配置することで、Claude Code がセッションをまたいで
+コーディングルール・テスト方針・禁止事項を自動参照できる。
+
 ---
 
 ## 開発状況
