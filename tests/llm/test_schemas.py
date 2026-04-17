@@ -107,25 +107,27 @@ class TestParseLlmResult:
         with pytest.raises(ResponseFormatError):
             parse_llm_result(json.dumps(data))
 
-    def test_ambiguities_not_list_raises_response_format_error(self):
+    def test_ambiguities_string_is_coerced_to_list(self):
+        # LLM が文字列を返した場合は 1 要素のリストに変換する
         data = {
             "summary": "s",
             "viewpoints": [],
-            "ambiguities": "not a list",
+            "ambiguities": "要確認事項あり",
             "notes": [],
         }
-        with pytest.raises(ResponseFormatError):
-            parse_llm_result(json.dumps(data))
+        result = parse_llm_result(json.dumps(data))
+        assert result.ambiguities == ["要確認事項あり"]
 
-    def test_notes_not_list_raises_response_format_error(self):
+    def test_notes_string_is_coerced_to_list(self):
+        # LLM が文字列を返した場合は 1 要素のリストに変換する
         data = {
             "summary": "s",
             "viewpoints": [],
             "ambiguities": [],
-            "notes": "not a list",
+            "notes": "注意事項あり",
         }
-        with pytest.raises(ResponseFormatError):
-            parse_llm_result(json.dumps(data))
+        result = parse_llm_result(json.dumps(data))
+        assert result.notes == ["注意事項あり"]
 
     def test_json_array_instead_of_object_raises(self):
         with pytest.raises(ResponseFormatError):

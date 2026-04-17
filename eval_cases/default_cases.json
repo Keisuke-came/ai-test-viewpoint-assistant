@@ -1,0 +1,110 @@
+[
+  {
+    "case_id": "TC-001",
+    "title": "ログイン画面（正常系・異常系・境界値）",
+    "target_type": "screen",
+    "spec_text": "ユーザーがメールアドレスとパスワードを入力してログインする画面。メールアドレスは最大255文字、パスワードは8〜64文字。ログイン失敗は最大3回まで試行可能で、超過するとアカウントロック。ロック解除はメール認証で行う。",
+    "supplemental_text": "パスワードは英数字と一部記号のみ許容。ロック中は理由を画面に表示する。",
+    "expectations": {
+      "min_viewpoints": 5,
+      "required_sections": ["# テスト観点", "# サマリ"],
+      "expected_categories_any": ["正常系", "異常系", "境界値"],
+      "expected_categories_all": ["正常系", "異常系"],
+      "expected_keywords_any": ["ログイン", "パスワード"],
+      "expected_keywords_all": [],
+      "forbidden_keywords": [],
+      "notes_presence_expected": null,
+      "ambiguities_presence_expected": null
+    }
+  },
+  {
+    "case_id": "TC-002",
+    "title": "ユーザー登録 API（バリデーション重視）",
+    "target_type": "api",
+    "spec_text": "新規ユーザーを登録する REST API（POST /users）。リクエストボディに name（1〜50文字）, email（RFC 5321 準拠）, password（8〜64文字）を受け取る。メールアドレスが既登録の場合は 409 Conflict を返す。登録成功時は 201 Created でユーザー ID を返す。",
+    "supplemental_text": "パスワードは bcrypt でハッシュ化して保存する。レスポンスにパスワードを含めてはならない。",
+    "expectations": {
+      "min_viewpoints": 5,
+      "required_sections": ["# テスト観点"],
+      "expected_categories_any": ["正常系", "異常系", "境界値"],
+      "expected_categories_all": ["正常系", "異常系"],
+      "expected_keywords_any": ["バリデーション", "メール", "パスワード", "409", "201"],
+      "expected_keywords_all": [],
+      "forbidden_keywords": ["パスワードをレスポンスに含める"],
+      "notes_presence_expected": null,
+      "ambiguities_presence_expected": null
+    }
+  },
+  {
+    "case_id": "TC-003",
+    "title": "CSV 出力バッチ（境界値・エラー処理）",
+    "target_type": "batch",
+    "spec_text": "月次の売上データを CSV に出力するバッチ処理。対象期間の売上レコードを全件取得し、集計後に /output/sales_YYYYMM.csv として保存する。レコードが 0 件の場合はヘッダー行のみ出力する。処理中にエラーが発生した場合はログを出力してリトライを 3 回行い、それでも失敗した場合はアラートメールを送信する。",
+    "supplemental_text": "出力ファイルのエンコーディングは UTF-8 BOM。",
+    "expectations": {
+      "min_viewpoints": 4,
+      "required_sections": ["# テスト観点"],
+      "expected_categories_any": ["正常系", "異常系", "境界値"],
+      "expected_categories_all": [],
+      "expected_keywords_any": ["CSV", "バッチ", "リトライ", "エラー"],
+      "expected_keywords_all": [],
+      "forbidden_keywords": [],
+      "notes_presence_expected": null,
+      "ambiguities_presence_expected": null
+    }
+  },
+  {
+    "case_id": "TC-004",
+    "title": "パスワードリセット画面（セキュリティ観点）",
+    "target_type": "screen",
+    "spec_text": "登録済みメールアドレスを入力するとパスワードリセット用のリンクをメールで送信する画面。リンクの有効期限は 24 時間。リンクは 1 回使用すると無効になる。未登録メールアドレスを入力した場合もエラーメッセージは出さず成功と同じ画面を表示する（ユーザー列挙攻撃対策）。",
+    "supplemental_text": "",
+    "expectations": {
+      "min_viewpoints": 4,
+      "required_sections": ["# テスト観点"],
+      "expected_categories_any": ["正常系", "異常系", "セキュリティ"],
+      "expected_categories_all": [],
+      "expected_keywords_any": ["セキュリティ", "有効期限", "リセット", "列挙"],
+      "expected_keywords_all": [],
+      "forbidden_keywords": [],
+      "notes_presence_expected": null,
+      "ambiguities_presence_expected": null
+    }
+  },
+  {
+    "case_id": "TC-005",
+    "title": "商品検索 API（ページング・パフォーマンス）",
+    "target_type": "api",
+    "spec_text": "商品をキーワード検索する REST API（GET /products?q=xxx&page=1&per_page=20）。キーワードは商品名・説明文に対して部分一致検索する。per_page は最大 100 まで指定可能。ヒット件数が 0 の場合は空配列を返す。キーワード未指定の場合は全件を返す。レスポンスには合計件数・現在ページ・総ページ数を含める。",
+    "supplemental_text": "検索結果は関連度順に並ぶ。per_page > 100 は 400 Bad Request。",
+    "expectations": {
+      "min_viewpoints": 4,
+      "required_sections": ["# テスト観点"],
+      "expected_categories_any": ["正常系", "異常系", "境界値"],
+      "expected_categories_all": [],
+      "expected_keywords_any": ["ページ", "検索", "per_page", "キーワード"],
+      "expected_keywords_all": [],
+      "forbidden_keywords": [],
+      "notes_presence_expected": null,
+      "ambiguities_presence_expected": null
+    }
+  },
+  {
+    "case_id": "TC-006",
+    "title": "バグ修正チケット（再現性確認）",
+    "target_type": "ticket",
+    "spec_text": "ログイン後にプロフィール画面へ遷移すると、特定条件下でユーザー名が空白で表示されるバグ。再現条件: 名前フィールドにマルチバイト文字（例: 日本語）を含むユーザーで発生。発生環境: 本番・ステージング。修正内容: プロフィール取得 API のレスポンスで文字コードの変換処理を修正。",
+    "supplemental_text": "開発環境では再現しない。",
+    "expectations": {
+      "min_viewpoints": 3,
+      "required_sections": ["# テスト観点"],
+      "expected_categories_any": ["正常系", "異常系", "回帰"],
+      "expected_categories_all": [],
+      "expected_keywords_any": ["マルチバイト", "文字コード", "プロフィール", "回帰", "ユーザー名"],
+      "expected_keywords_all": [],
+      "forbidden_keywords": [],
+      "notes_presence_expected": null,
+      "ambiguities_presence_expected": null
+    }
+  }
+]

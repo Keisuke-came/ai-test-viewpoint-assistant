@@ -34,3 +34,6 @@ Thumbs.db
 
 # Coverage
 .coverage
+
+# Eval cache (generated at runtime)
+.eval_cache/
