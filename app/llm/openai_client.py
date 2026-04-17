@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from openai import OpenAI, OpenAIError
 from app.config import settings
 from app.domain.models import LlmApiError
@@ -14,6 +15,7 @@ class OpenAiClient:
             timeout=settings.OPENAI_TIMEOUT_SECONDS,
         )
         self._model = settings.OPENAI_MODEL
+        self.last_usage: Optional[dict] = None
 
     def generate_viewpoints(self, system_prompt: str, user_prompt: str) -> str:
         try:
@@ -25,6 +27,12 @@ class OpenAiClient:
                 ],
                 response_format={"type": "json_object"},
             )
+            if response.usage:
+                self.last_usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                }
             return response.choices[0].message.content or ""
         except OpenAIError as e:
             logger.error("OpenAI API error: %s", e)

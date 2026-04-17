@@ -141,6 +141,64 @@ def render_result(result: DisplayResult) -> None:
     )
 
 
+def render_eval_section() -> None:
+    """評価機能セクションを描画する。"""
+    st.divider()
+    with st.expander("🔬 AI 出力品質 評価（ルールベース）", expanded=False):
+        st.caption("事前定義ケースを一括実行し、生成結果をルールベースで評価します。LLM の追加呼び出しは行いません。")
+
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            run_clicked = st.button("評価を実行", key="eval_run")
+        with col2:
+            refresh = st.checkbox("キャッシュ無視（再生成）", value=False, key="eval_refresh")
+
+        if run_clicked:
+            try:
+                from app.eval.case_loader import load_cases
+                from app.eval.reporter import to_markdown
+                from app.eval.runner import run_cases
+
+                cases = load_cases()
+                with st.spinner(f"{len(cases)} ケースを評価中..."):
+                    report = run_cases(cases, refresh=refresh)
+
+                pass_rate = (
+                    f"{report.passed / report.total * 100:.1f}%" if report.total > 0 else "N/A"
+                )
+                if report.failed == 0:
+                    st.success(f"全 {report.total} ケース PASS ({pass_rate})")
+                else:
+                    st.warning(f"{report.passed}/{report.total} PASS ({pass_rate})  — {report.failed} FAIL")
+
+                rows = []
+                for r in report.results:
+                    rows.append({
+                        "case_id": r.case_id,
+                        "タイトル": r.title,
+                        "判定": "✅ PASS" if r.passed else "❌ FAIL",
+                        "観点数": r.viewpoint_count,
+                        "キャッシュ": "hit" if r.cache_hit else "miss",
+                        "時間(s)": r.duration_seconds,
+                        "失敗理由": "; ".join(r.failures) if r.failures else "-",
+                    })
+                st.dataframe(rows, use_container_width=True)
+
+                with st.expander("Markdown レポート"):
+                    st.text_area(
+                        "コピー用",
+                        value=to_markdown(report),
+                        height=300,
+                        key="eval_md_output",
+                    )
+
+            except EnvironmentError as e:
+                st.error(str(e))
+            except Exception as e:
+                logger.error("評価実行エラー: %s", e)
+                st.error(f"評価実行中にエラーが発生しました: {e}")
+
+
 def render_page() -> None:
     st.set_page_config(
         page_title="AIテスト観点整理アシスタント",
@@ -176,6 +234,8 @@ def render_page() -> None:
 
     if st.session_state.display_result:
         render_result(st.session_state.display_result)
+
+    render_eval_section()
 
 
 if __name__ == "__main__":

@@ -177,6 +177,30 @@ Skill と Subagents を組み合わせた典型的な開発フロー。
 
 ---
 
+## AI 出力品質 評価フレームワーク
+
+複数の評価ケースをまとめて実行し、生成結果をルールベースで自動評価する機能。
+LLM-as-a-judge のような追加 LLM 呼び出しは行わず、ローカル判定とキャッシュ再利用でトークンを節約する。
+
+**評価ロジック**: 観点数・必須セクション・カテゴリ・キーワード・禁止ワード等をローカルで判定
+**キャッシュ**: 同一条件（model + target_type + spec_text）ならキャッシュを再利用（`.eval_cache/` に JSON 保存）
+**レポート**: JSON / Markdown で出力。PR や README に貼りやすい形式
+
+```bash
+# デフォルトケース（6件）で評価実行（キャッシュ利用）
+python eval_run.py
+
+# キャッシュを無視して再生成
+python eval_run.py --refresh
+
+# 結果をファイルに保存
+python eval_run.py --output-json results/eval.json --output-md results/eval.md
+```
+
+Streamlit UI からも「🔬 AI 出力品質 評価」セクションを開いて実行できる。
+
+---
+
 ## セットアップ
 
 ```bash
@@ -231,3 +255,4 @@ python3 -m pytest tests/ -x -q
 - [x] Claude Code Skill（pytest-impl）
 - [x] CLAUDE.md によるプロジェクトルール定義
 - [x] Subagents 基盤（repo-explorer / test-designer / reviewer）
+- [x] AI 出力品質 評価フレームワーク（ルールベース + キャッシュ、CLI / UI 対応）
