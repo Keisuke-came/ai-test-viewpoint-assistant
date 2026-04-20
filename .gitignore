@@ -1,3 +1,6 @@
+# Headlessモード生成レポート（ローカル限定）
+reports/*.md
+
 # Python
 __pycache__/
 *.py[cod]
