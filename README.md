@@ -82,6 +82,7 @@ ai-test-viewpoint-assistant/
 | Skill（pytest-impl） | pytest 実装の定型化された入口 |
 | Subagents | 調査・テスト設計・差分レビューの専任担当 |
 | CLAUDE.md | コーディングルール・禁止事項の明文化 |
+| Headless モード | `claude -p` でバッチ実行・レポート自動生成 |
 
 ---
 
@@ -159,6 +160,27 @@ Skill を使うことで以下が安定する。
 - 禁止事項（`except Exception: pass` / `print()` デバッグ / テストなしのロジック変更 等）
 
 Claude Code との作業ルールを明文化することで、セッションをまたいでも一貫した品質が保てる。
+
+---
+
+### Headless モード（claude -p）によるバッチ実行
+
+`claude -p` を使い、人間が操作しなくてもpytestを実行してMarkdownレポートを自動生成する仕組みを構築している。
+
+```bash
+# 手動実行
+bash scripts/headless_pytest_report.sh
+
+# 出力先
+reports/YYYY-MM-DD_pytest_report.md（.gitignore 対象・ローカル限定）
+```
+
+レポートには実行日時・結果（PASSED/FAILED）・総テスト数・詳細ログが含まれる。
+
+Macでの定期自動実行はlaunchdを使う。設定サンプルは `scripts/cron_example.txt` を参照。
+launchd登録後は検証が終わり次第、必ず `launchctl unload` で無効化すること。
+
+将来的にはCron + Headless の組み合わせを月次KPI集計などのバッチ処理に横展開できる。
 
 ---
 

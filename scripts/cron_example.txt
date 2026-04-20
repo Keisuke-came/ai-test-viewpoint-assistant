@@ -1,0 +1,47 @@
+# ============================================================
+# Macでの自動実行設定ガイド（launchd）
+# ============================================================
+#
+# 【設定手順】
+#
+# 1. 以下の内容を
+#    ~/Library/LaunchAgents/com.pytest-report.plist
+#    として保存する（PATHは実際のものに書き換える）
+#
+# 2. launchdに登録する
+#    launchctl load ~/Library/LaunchAgents/com.pytest-report.plist
+#
+# 3. 確認後、無効化する（検証が終わったら必ず止める）
+#    launchctl unload ~/Library/LaunchAgents/com.pytest-report.plist
+#
+# ============================================================
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.pytest-report</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/PATH/TO/ai-test-viewpoint-assistant/scripts/headless_pytest_report.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>0</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/pytest-report.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/pytest-report-error.log</string>
+</dict>
+</plist>

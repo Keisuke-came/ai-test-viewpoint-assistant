@@ -149,3 +149,17 @@ localhost:8501 を開いて初期表示を確認してください。
 ```
 
 前提: `streamlit run app/streamlit_app.py` で起動済みであること。
+
+### Headless モード（claude -p）
+
+`scripts/headless_pytest_report.sh` を実行することで、
+`claude -p` 経由ではなくシェル側でpytestを直接実行し、結果をMarkdownレポートとして保存する。
+
+```bash
+bash scripts/headless_pytest_report.sh
+# → reports/YYYY-MM-DD_pytest_report.md を生成
+```
+
+- レポートは `reports/` に保存される（`.gitignore` 対象・ローカル限定）
+- Macでの定期実行設定は `scripts/cron_example.txt` を参照
+- 検証後は必ず `launchctl unload` でlaunchdを無効化すること
