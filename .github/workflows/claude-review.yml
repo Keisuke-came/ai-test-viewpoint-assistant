@@ -1,0 +1,62 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            このPRをレビューしてください。
+
+            ## レビュー観点
+            CLAUDE.md のコーディングルール・禁止事項を踏まえ、以下を重点的にチェックしてください。
+
+            ### 必須チェック項目
+            1. 型ヒントが全関数引数・戻り値に付与されているか
+               （Optional[X] を使い、X | None は使わない / Python 3.9対応）
+            2. public関数・クラスにGoogleスタイルdocstringがあるか
+            3. 例外設計が InputValidationError / LlmApiError / ResponseFormatError の3種に従っているか
+            4. 以下の禁止事項に抵触していないか
+               - `except Exception: pass` による握りつぶし
+               - `print()` によるデバッグコード残留
+               - `app/services/` `app/utils/` のロジック変更にテストが追随していない
+               - `.env` の直接編集
+               - `streamlit_app.py` に対するユニットテストの追加
+
+            ### テスト配置ルール
+            - `app/xxx/yyy.py` の変更に対し、対応するテストが `tests/xxx/test_yyy.py` にあるか
+
+            ### モック方針
+            - OpenAI API (`openai.OpenAI`) がモックされているか
+            - 純粋関数（prompt_builder / markdown_formatter / result_formatter / category_utils）が
+              モックされず実装を直接呼んでいるか
+
+            ## レビュー形式
+            - 問題があれば該当ファイル・行番号を示して指摘
+            - 問題がなければ「✅ ルール上の問題は検出されませんでした」と明記
+            - 改善提案があれば「💡 提案」として補足
+            - 指摘は日本語で記述
+
+            コメントを投稿して終了してください。コードの修正はしないでください。
+          claude_args: |
+            --max-turns 8
+            --model claude-sonnet-4-6
