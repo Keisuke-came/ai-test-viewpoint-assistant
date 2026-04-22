@@ -83,6 +83,7 @@ ai-test-viewpoint-assistant/
 | Subagents | 調査・テスト設計・差分レビューの専任担当 |
 | CLAUDE.md | コーディングルール・禁止事項の明文化 |
 | Headless モード | `claude -p` でバッチ実行・レポート自動生成 |
+| GitHub Actions + claude-code-action | PR自動レビュー・pytest自動実行のCI基盤 |
 
 ---
 
@@ -181,6 +182,28 @@ Macでの定期自動実行はlaunchdを使う。設定サンプルは `scripts/
 launchd登録後は検証が終わり次第、必ず `launchctl unload` で無効化すること。
 
 将来的にはCron + Headless の組み合わせを月次KPI集計などのバッチ処理に横展開できる。
+
+---
+
+### GitHub Actions によるCI自動化
+
+PR作成時に以下の2本のワークフローが自動実行される。
+
+| ワークフロー | 役割 | 実行タイミング |
+|---|---|---|
+| `pytest.yml` | pytest自動実行 | PR作成・更新・mainへのpush |
+| `claude-review.yml` | Claude Codeによる自動レビュー | PR作成・更新 |
+
+Claude Codeレビューは CLAUDE.md の禁止事項（`except Exception: pass` / `print()`デバッグ /
+テストなしロジック変更 等）を観点にチェックし、PRコメントとして指摘を自動投稿する。
+
+Headlessモード（`claude -p`）をGitHub Actions上に載せ替えた構成で、
+ローカルPCの稼働状態に依存しない安定したCI基盤を実現している。
+
+**設定手順**
+1. リポジトリの Settings → Secrets and variables → Actions → New repository secret
+2. Name: `ANTHROPIC_API_KEY` / Secret: （ポートフォリオ専用に発行したAPIキー）
+3. 以降、PRを作成すると自動でワークフローが起動する
 
 ---
 

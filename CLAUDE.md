@@ -163,3 +163,17 @@ bash scripts/headless_pytest_report.sh
 - レポートは `reports/` に保存される（`.gitignore` 対象・ローカル限定）
 - Macでの定期実行設定は `scripts/cron_example.txt` を参照
 - 検証後は必ず `launchctl unload` でlaunchdを無効化すること
+
+### GitHub Actions（CI）
+
+`.github/workflows/` 配下に2本のワークフローを設定済み。
+
+- `pytest.yml`: PR作成時・main へのpush時に `python -m pytest tests/ -x -q` を自動実行
+- `claude-review.yml`: PR作成時に `anthropics/claude-code-action@v1` でコードレビューを自動実行
+
+Claude レビューは本ファイル（CLAUDE.md）の禁止事項・テストルール・コーディングルールを
+観点としてチェックする。指摘はPRコメントとして自動投稿される。
+
+**必要な設定**
+- GitHub Secrets に `ANTHROPIC_API_KEY` を登録（ポートフォリオ専用発行キー推奨）
+- `pull_request` トリガーを使用（fork安全性のため `pull_request_target` は使わない）
