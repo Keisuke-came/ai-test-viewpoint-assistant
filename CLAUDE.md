@@ -108,6 +108,25 @@ docs/                     # 設計書
 
 テストが失敗した場合は実装を修正してから次の編集に進むこと。
 
+### UserPromptSubmit Hook（git ブランチ注入）
+
+`.claude/settings.json` に UserPromptSubmit Hook を設定済み。
+プロンプト送信時に現在の git ブランチ名を自動でコンテキストとして注入する。
+
+- Hook スクリプト: `.claude/hooks/inject_git_branch.sh`
+- 発火タイミング: ユーザーのプロンプト送信直後・Claude 処理前
+- stdout の挙動: PostToolUse と異なり、stdout がそのままプロンプトにコンテキストとして追加される（公式仕様）
+
+注入される内容の例:
+
+​```
+[auto-injected context]
+current git branch: feature/user-prompt-submit-hook
+​```
+
+git リポジトリ外や detached HEAD のときもプロンプトを止めず安全に通す設計（常に exit 0）。
+新規 Hook を追加したあとは Claude Code セッションの再起動が必要。
+
 ### Skill（pytest-impl）
 
 `.claude/skills/pytest-impl/SKILL.md` に pytest 実装用 Skill を定義済み。
