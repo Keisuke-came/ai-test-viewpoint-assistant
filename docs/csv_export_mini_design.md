@@ -2,7 +2,17 @@
 
 > 対象モジュール：`app/services/csv_formatter.py`（新規）
 > 関連：`app/services/markdown_formatter.py`（既存・参照パターン）
-> ステータス：**v1 ドラフト（叩き台）** — Phase 1 の Subagent で検証・補強する
+> ステータス：**v2（確定版）** — Phase 1 Subagent（repo-explorer / test-designer）の調査結果を fan-in して更新
+
+## v2 の変更点（Phase 2 fan-in による更新）
+
+| セクション | 変更内容 |
+|---|---|
+| セクション 2 | `List[Viewpoint]` の型が確定済み（推定→確定）|
+| セクション 4 | `priority` の実値が `高/中/低`（英語表記ではない）と確定 |
+| セクション 5 | 挿入位置を確定：`render_result` 末尾（行 141 直後）。「既存 Markdown ダウンロードボタン」は実際には `st.text_area`（ダウンロードボタンではない）。`grouped_viewpoints` のフラット化が必要 |
+| セクション 7 | テスト観点を test-designer の結果で更新：ヘッダ列・フィールドマッピング検証を追加、1000 件パフォーマンステストを削除（MVP スコープ外） |
+| セクション 8 | `markdown_formatter.py` にバリデーションがないことを確定。csv_formatter のバリデーションは設計書固有の新規追加要件として明記 |
 
 ---
 
@@ -26,7 +36,7 @@
 ### 入力
 
 - 観点生成サービス（`viewpoint_generation_service`）が返す観点リスト
-- 型：`List[Viewpoint]`（推定。Phase 1 の repo-explorer が確定する）
+- 型：`List[Viewpoint]`（確定）
 
 ### 出力
 
@@ -119,9 +129,9 @@ def format_as_csv(viewpoints):
 | カテゴリ | 観点のカテゴリ（正常系 / 異常系 / 境界値 等） | Phase 1 で実フィールド名を確認 |
 | 観点タイトル | 観点の短い表題 | 〃 |
 | 説明 | 観点の詳細 | 〃 |
-| 優先度 | 優先度（High / Middle / Low 等） | 〃 |
+| 優先度 | 優先度（`高` / `中` / `低`） | `priority: Literal["高", "中", "低"]` の実値をそのまま出力 |
 
-**注記**：列名と対応フィールドは `Viewpoint` の実際のスキーマに合わせる。Phase 1 の repo-explorer が `app/domain/models.py` を調査して確定する。
+**確定事項**：`priority` の実値は日本語固定（`高/中/低`）。英語変換は行わず、そのまま CSV に出力する。
 
 ---
 
@@ -129,11 +139,20 @@ def format_as_csv(viewpoints):
 
 ### 配置
 
-`app/streamlit_app.py` の既存 Markdown ダウンロードボタンの **直後** に配置する。具体的な行番号は Phase 1 の repo-explorer が特定する。
+`app/streamlit_app.py` の `render_result` 関数末尾（行 141 の直後）に配置する。
+
+**確定事項**：
+- 設計書 v1 で「既存 Markdown ダウンロードボタン」と書いた箇所は、実際には `st.text_area`（コピー用テキストエリア、行 136-141）であり `st.download_button` は存在しない
+- `render_result` は行 109-141。CSV ボタンは 142 行目以降に追記する
+- `render_result` が受け取る `DisplayResult` は `grouped_viewpoints: dict[str, list[Viewpoint]]` のみ保持。フラットな `List[Viewpoint]` に変換してから `format_as_csv` に渡す
 
 ### UI コード（案）
 
 ```python
+from app.services.csv_formatter import format_as_csv
+
+# grouped_viewpoints をフラット化して csv_formatter に渡す
+viewpoints = [vp for vps in result.grouped_viewpoints.values() for vp in vps]
 csv_text = format_as_csv(viewpoints)
 st.download_button(
     label="CSV ダウンロード",
@@ -163,50 +182,71 @@ CLAUDE.md の例外設計ルールに従う。
 
 ---
 
-## 7. テスト観点（叩き台）
+## 7. テスト観点（v2 確定版）
 
-**以下は叩き台。Phase 1 の test-designer が強化・補完する。**
+**test-designer の調査結果を反映して確定。モック不要（純粋関数のため実装を直接呼ぶ）。**
 
-### 7-1. 正常系
+### 7-1. 正常系（追加あり）
 
-- 観点 1 件を含むリスト → ヘッダ行 + 1 行の CSV 文字列
-- 観点 3 件を含むリスト → ヘッダ行 + 3 行の CSV 文字列
-- 戻り値の先頭が BOM（`\ufeff`）であること
+| # | 観点名 | 期待動作 |
+|---|---|---|
+| N-1 | 1 件リストの行数 | ヘッダ行 + データ 1 行、計 2 行 |
+| N-2 | 3 件リストの行数 | ヘッダ行 + データ 3 行、計 4 行 |
+| N-3 | BOM 先頭付与（文字）| 戻り値先頭文字が `"\ufeff"` |
+| N-4 | BOM 先頭付与（バイト列）| `result.encode("utf-8")` 先頭 3 バイトが `b"\xef\xbb\xbf"` |
+| N-5 | 戻り値の型 | `isinstance(result, str)` が True |
+| N-6 | ヘッダ列名 | 1 行目が「カテゴリ,観点タイトル,説明,優先度」の 4 列 |
+| N-7 | フィールドマッピング | `category/title/description/priority` が対応する列に正しく出力される |
+| N-8 | priority 全パターン | `高/中/低` がそれぞれそのまま出力される |
 
-### 7-2. 異常系
+### 7-2. 異常系（追加あり）
 
-- `None` を渡す → `InputValidationError`
-- リスト内に `Viewpoint` 以外の型が混在 → `InputValidationError`
+| # | 観点名 | 期待動作 |
+|---|---|---|
+| E-1 | `None` を渡す | `InputValidationError` |
+| E-2 | 要素に `dict` が混在 | `InputValidationError` |
+| E-3 | 要素に `None` が混在 | `InputValidationError` |
+| E-4 | 要素に `str` が混在 | `InputValidationError` |
 
-### 7-3. 境界値
+### 7-3. 境界値（一部削減）
 
-- 空リスト → ヘッダ行のみ（エラーにならない）
-- フィールドにカンマ `,` を含む → 該当フィールドが `"` で囲まれている
-- フィールドに改行 `\n` を含む → 該当フィールドが `"` で囲まれている
-- フィールドにダブルクォート `"` を含む → `""` にエスケープされている
-- 日本語（ひらがな / カタカナ / 漢字 / 絵文字）→ UTF-8 で正しく出力される
-- 長いテキスト（1000 文字超）を含む観点 → 正しく 1 フィールドに収まる
+| # | 観点名 | 期待動作 |
+|---|---|---|
+| B-1 | 空リスト | エラーにならずヘッダ行のみ返す |
+| B-2 | 空リストの行数 | `\r\n` split で 1 行（ヘッダのみ） |
+| B-3 | フィールドにカンマ含む | 該当フィールドが `"` で囲まれる |
+| B-4 | フィールドに `\n` 含む | 該当フィールドが `"` で囲まれる |
+| B-5 | フィールドにダブルクォート含む | `""` にエスケープされる |
+| B-6 | 日本語フィールド | ひらがな / カタカナ / 漢字が文字化けせず出力される |
+| B-7 | フィールド値が空文字列 | エラーにならず空フィールドとして出力される |
+| B-8 | 1000 文字超のフィールド | エラーにならず 1 フィールドに収まる（フィールド長境界値） |
 
-### 7-4. 仕様確認
+*削除*: 絵文字フィールド（Excel バージョン依存で合否判定不可）
 
-- 行末が `\r\n`（CRLF）であること
-- Excel で開いて文字化けしないこと（BOM 効果の確認、手動または Python 側で `.encode("utf-8")` → `.decode("utf-8-sig")` で BOM 検出）
+### 7-4. 仕様確認（具体化）
 
-### 7-5. 大量データ
+| # | 観点名 | 期待動作 |
+|---|---|---|
+| S-1 | 行末が CRLF | `"\r\n"` で split したとき期待行数と一致する |
+| S-2 | BOM を除いた本体の符号化健全性 | `result[1:].encode("utf-8").decode("utf-8")` が例外なく通る |
+| S-3 | LF 単独が含まれない | `\r\n` 以外の改行コードが本体に含まれない |
 
-- 観点 1000 件 → 正常に CSV 化される（パフォーマンス観点の叩き台。Phase 1 で MVP に過剰か判断）
+### 7-5. 大量データ（削除）
+
+MVP スコープ外として削除。理由：計算量 O(n) で自明・パフォーマンス基準未定義・CI 速度への影響。
+将来要件化した時点で `tests/performance/` に追加する。
 
 ---
 
 ## 8. 既存パターンとの整合メモ
 
-**以下は推定。Phase 1 の repo-explorer が検証する。**
+**repo-explorer の調査結果で確定済み。**
 
-| 項目 | 推定される既存パターン | 確認ポイント |
+| 項目 | 確定値 | 備考 |
 |---|---|---|
-| ファイル配置 | `app/services/` 配下 | markdown_formatter.py と並列配置で OK か |
-| 関数形式 | 純粋関数（副作用なし） | markdown_formatter.py が純粋関数か |
-| 例外の raise 位置 | 関数先頭で引数バリデーション | markdown_formatter.py の実装パターンを踏襲 |
+| ファイル配置 | `app/services/` 配下 | `markdown_formatter.py` と並列配置で OK |
+| 関数形式 | 純粋関数（副作用なし） | `markdown_formatter.py` は純粋関数であることを確認済み |
+| 例外の raise | **既存パターンにはない。csv_formatter 固有の新規追加要件** | `markdown_formatter.py` は引数バリデーションなし・例外 raise なし。csv_formatter の `InputValidationError` 設計は設計書セクション 6 に基づく独自要件 |
 | テスト配置 | `tests/services/test_csv_formatter.py` | CLAUDE.md の配置ルール通り |
 
 ---
@@ -224,9 +264,9 @@ CLAUDE.md の例外設計ルールに従う。
 
 ## 10. Phase 1 で Subagent が補強する箇所（サマリ）
 
-| 担当 Subagent | 補強内容 |
-|---|---|
-| `repo-explorer` | ・`Viewpoint` の実フィールド名と型（セクション 3・4 のヘッダ列・ヘルパー関数）<br>・`markdown_formatter.py` の関数設計パターン（セクション 8）<br>・`streamlit_app.py` の既存 Markdown ボタンの行番号と配置コンテキスト（セクション 5） |
-| `test-designer` | ・テスト観点の追加・削減（セクション 7）<br>・大量データ観点の要否判断（7-5）<br>・BOM 検証方法の具体化（7-4）<br>・過剰な観点の削減（MVP スコープ調整） |
+**v2 で解決済み。** Phase 1 の両 Subagent が独立して調査し、Phase 2 の親セッションが統合・確定させた。
 
-Phase 2（fan-in）で親がこれらを反映し、本設計書を **v2** に更新してから Phase 3（実装）に進む。
+| 担当 Subagent | 補強内容 | 結果 |
+|---|---|---|
+| `repo-explorer` | `Viewpoint` の実フィールド名と型、`markdown_formatter.py` のパターン、streamlit 挿入行番号 | すべて確定済み（本設計書 v2 に反映）|
+| `test-designer` | テスト観点の追加・削減、1000 件の要否、BOM/CRLF 検証の具体化 | セクション 7 v2 に反映済み |
