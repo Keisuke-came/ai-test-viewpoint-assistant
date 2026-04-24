@@ -168,10 +168,13 @@ def test_japanese_field():
 
 
 def test_empty_string_field():
-    """B-7: フィールド値が空文字列 → エラーにならず出力される"""
+    """B-7: フィールド値が空文字列 → エラーにならず空フィールドとして出力される"""
     vp = Viewpoint(category="A", title="T", description="", priority="高")
     result = format_as_csv([vp])
-    assert result is not None
+    # データ行（BOM除去後 2行目）に空フィールドが含まれること
+    data_row = result[1:].split("\r\n")[1]
+    # description が空なので "A,T,,高" のように連続カンマが現れる
+    assert ",," in data_row or data_row.endswith(",")
 
 
 def test_long_field():

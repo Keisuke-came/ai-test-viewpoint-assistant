@@ -1,11 +1,11 @@
 import csv
 import io
-from typing import List
+from typing import List, Optional
 
 from app.domain.models import InputValidationError, Viewpoint
 
 
-def format_as_csv(viewpoints: List[Viewpoint]) -> str:
+def format_as_csv(viewpoints: Optional[List[Viewpoint]]) -> str:
     """観点リストを CSV 形式の文字列に変換する。
 
     先頭に BOM（U+FEFF）を付与し、Excel で開いた際の文字化けを防ぐ。
