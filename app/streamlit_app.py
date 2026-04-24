@@ -15,6 +15,7 @@ from app.domain.models import (
     ResponseFormatError,
     ApplicationError,
 )
+from app.services.csv_formatter import format_as_csv
 from app.services.viewpoint_generation_service import ViewpointGenerationService
 
 logger = logging.getLogger(__name__)
@@ -138,6 +139,14 @@ def render_result(result: DisplayResult) -> None:
         value=result.markdown_text,
         height=300,
         key="markdown_output",
+    )
+
+    viewpoints = [vp for vps in result.grouped_viewpoints.values() for vp in vps]
+    st.download_button(
+        label="CSV ダウンロード",
+        data=format_as_csv(viewpoints).encode("utf-8"),
+        file_name="viewpoints.csv",
+        mime="text/csv",
     )
 
 
