@@ -81,6 +81,7 @@ ai-test-viewpoint-assistant/
 | Playwright MCP | UI の動作確認を自然言語で指示 |
 | PostToolUse Hook | `.py` 編集後に pytest を自動実行 |
 | UserPromptSubmit Hook | プロンプト送信時に git ブランチ名を自動注入 |
+| SessionStart Hook | セッション開始時に日付・曜日を自動注入 |
 | Skill（pytest-impl） | pytest 実装の定型化された入口 |
 | Subagents | 調査・テスト設計・差分レビューの専任担当 |
 | CLAUDE.md | コーディングルール・禁止事項の明文化 |
@@ -326,3 +327,4 @@ python3 -m pytest tests/ -x -q
 - [x] Subagents 基盤（repo-explorer / test-designer / reviewer）
 - [x] AI 出力品質 評価フレームワーク（ルールベース + キャッシュ、CLI / UI 対応）
 - [x] UserPromptSubmit Hook（git ブランチ名の自動注入）
+- [x] SessionStart Hook（日付・曜日の自動注入）
