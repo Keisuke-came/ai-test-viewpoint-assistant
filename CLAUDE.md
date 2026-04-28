@@ -127,6 +127,26 @@ current git branch: feature/user-prompt-submit-hook
 git リポジトリ外や detached HEAD のときもプロンプトを止めず安全に通す設計（常に exit 0）。
 新規 Hook を追加したあとは Claude Code セッションの再起動が必要。
 
+### SessionStart Hook（セッション情報注入）
+
+`.claude/settings.json` に SessionStart Hook を設定済み。
+セッション開始時に現在の日付・曜日を自動でコンテキストとして注入する。
+
+- Hook スクリプト: `.claude/hooks/inject_session_date.sh`
+- 発火タイミング: セッション開始時（startup / resume / clear すべて）
+- stdout の挙動: UserPromptSubmit と同じく、stdout がそのままコンテキストとして追加される
+
+注入される内容の例:
+
+```
+[session context]
+session started at: 2026-04-28 (Tuesday)
+```
+
+UserPromptSubmit との使い分け:
+- UserPromptSubmit: 毎プロンプト発火、動的情報向け（git ブランチ等）
+- SessionStart: セッションごとに 1 回、静的・重い処理向け
+
 ### Skill（pytest-impl）
 
 `.claude/skills/pytest-impl/SKILL.md` に pytest 実装用 Skill を定義済み。

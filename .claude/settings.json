@@ -18,6 +18,14 @@
           { "type": "command", "command": ".claude/hooks/inject_git_branch.sh" }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/inject_session_date.sh" }
+        ]
+      }
     ]
   }
 }
