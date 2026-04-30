@@ -30,7 +30,7 @@ Python + Streamlit + OpenAI API で構築したアプリ本体に加え、
 
 | 区分 | 技術 |
 |---|---|
-| 言語 | Python 3.9+ |
+| 言語 | Python 3.10+ |
 | UI | Streamlit |
 | LLM 連携 | OpenAI API / openai-python |
 | データバリデーション | Pydantic |
@@ -79,6 +79,7 @@ ai-test-viewpoint-assistant/
 | ツール | 役割 |
 |---|---|
 | Playwright MCP | UI の動作確認を自然言語で指示 |
+| 自作 MCP（skill-lister） | プロジェクト内の Skill 一覧を Claude から取得可能に |
 | PostToolUse Hook | `.py` 編集後に pytest を自動実行 |
 | UserPromptSubmit Hook | プロンプト送信時に git ブランチ名を自動注入 |
 | SessionStart Hook | セッション開始時に日付・曜日を自動注入 |
@@ -328,3 +329,4 @@ python3 -m pytest tests/ -x -q
 - [x] AI 出力品質 評価フレームワーク（ルールベース + キャッシュ、CLI / UI 対応）
 - [x] UserPromptSubmit Hook（git ブランチ名の自動注入）
 - [x] SessionStart Hook（日付・曜日の自動注入）
+- [x] 自作 MCP サーバー（skill-lister: list_skills ツール）

@@ -16,5 +16,9 @@ if echo "$FILE_PATH" | grep -qE '(app|tests)/.*\.py$'; then
     PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
     echo "[Hook] pytest を実行します: $FILE_PATH"
     cd "$PROJECT_ROOT"
-    python3 -m pytest tests/ -x -q
+    if [ -x ".venv/bin/python" ]; then
+        .venv/bin/python -m pytest tests/ -x -q
+    else
+        python3 -m pytest tests/ -x -q
+    fi
 fi

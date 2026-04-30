@@ -42,8 +42,9 @@ docs/                     # 設計書
 ### 型ヒント
 
 - すべての関数引数・戻り値に型ヒントを付ける
-- `Optional[X]` は `X | None`（Python 3.10+）ではなく `Optional[X]` で統一（3.9 対応）
+- `Optional[X]` は `X | None`（Python 3.10+）ではなく `Optional[X]` で統一（旧来の書式に揃える）
 - Pydantic モデルのフィールドは必ず型を明示する
+- 動作環境は Python 3.10+（`mcp` パッケージが 3.10+ 必須のため）
 
 ### docstring
 
@@ -188,6 +189,35 @@ localhost:8501 を開いて初期表示を確認してください。
 ```
 
 前提: `streamlit run app/streamlit_app.py` で起動済みであること。
+
+### 自作 MCP サーバー（skill-lister）
+
+`.mcp.json` に `skill-lister` MCP を設定済み（project-scoped・自作）。
+`mcp_servers/skill_lister/server.py` をエントリポイントとして起動する。
+
+- 提供 Tool: `list_skills`（このプロジェクトの Skill 一覧を返す）
+- 起動方式: stdio（Claude Code が子プロセスとして起動）
+- 実装: 公式 MCP Python SDK の FastMCP
+
+使い方例（Claude Code のチャットで指示）:
+
+```
+このプロジェクトの Skill を一覧で見せて
+```
+
+サーバー単体の動作確認:
+
+```bash
+.venv/bin/python -m mcp_servers.skill_lister.server
+# stdio 待機状態になればOK。Ctrl+C で抜ける
+```
+
+詳細は `mcp_servers/skill_lister/README.md` を参照。
+
+**MCP 開発上の注意**:
+- `print()` は stdio を破壊するため禁止。ログは `sys.stderr` 経由
+- サーバーロジックの変更後は Claude Code セッション再起動が必須
+- `.mcp.json` の `command` は `.venv/bin/python`（mcp が Python 3.10+ 必須のため、システム `python3` ではなく venv を直接指す）
 
 ### Headless モード（claude -p）
 
