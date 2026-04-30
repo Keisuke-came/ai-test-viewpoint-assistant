@@ -5,6 +5,14 @@
       "args": [
         "@playwright/mcp@latest"
       ]
+    },
+    "skill-lister": {
+      "command": ".venv/bin/python",
+      "args": [
+        "-m",
+        "mcp_servers.skill_lister.server"
+      ],
+      "env": {}
     }
   }
 }
