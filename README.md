@@ -1,8 +1,28 @@
 # AI テスト観点整理アシスタント
 
-テスト仕様書・要件定義書・チケット文をもとに、テスト観点を自動で整理・生成する AI アシスタント。
-Python + Streamlit + OpenAI API で構築したアプリ本体に加え、
-**Claude Code を使った AI 支援開発基盤**（Skill / Subagents / Hook / MCP）も組み込んでいる。
+> Claude Code（Anthropic 公式の AI コーディング CLI）を業務アプリ開発にフル活用した実証ポートフォリオ。
+> Skill / Subagent / Hook / MCP / CI を組み合わせ、AI と分業する開発フローを設計・実装した記録。
+
+## このリポジトリの主張
+
+- **AI 支援開発を「仕組み」として組み込んだ** — Skill 2 種・Subagent 4 種・Hook 3 種・自作 MCP 1 本を `CLAUDE.md` と組み合わせ、セッションをまたいで再現可能な開発フローを構築
+- **AI 出力を即座に検証する仕組み** — `.py` 編集ごとに pytest 277 件が PostToolUse Hook で自動実行され、CI 側でも GitHub Actions（pytest + Claude 自動レビュー）が二重に守る
+- **「全部 AI に任せる」ではなく「AI と分業する」設計** — 調査・設計・実装・レビューを Subagent と Skill に役割分担し、人間がフェーズの切り替えを指揮する
+
+## 使われている Claude Code 機能
+
+| 機能 | 役割 | 実装 |
+|---|---|---|
+| Skill | 定型作業の入口 | `pytest-impl`, `design-to-code` |
+| Subagent | 役割専任の AI | `repo-explorer` / `test-designer` / `reviewer` / `file-lister` |
+| Hook | イベント駆動の自動化 | `PostToolUse`（pytest 自動実行）/ `UserPromptSubmit`（git ブランチ注入）/ `SessionStart`（日付注入） |
+| MCP（外部） | 外部ツール連携 | `playwright`（Streamlit UI のブラウザ操作） |
+| MCP（自作） | プロジェクト固有ツール | `skill-lister`（Tool: `list_skills`、`mcp_servers/skill_lister/`） |
+| プロジェクト指示 | ルール明文化 | `CLAUDE.md`（コーディング規約・テスト方針・禁止事項） |
+| Headless モード | バッチ実行 | `scripts/headless_pytest_report.sh`（+ launchd サンプル） |
+| CI | PR 自動検証 | GitHub Actions: `pytest.yml`, `claude-review.yml`（`anthropics/claude-code-action@v1`） |
+
+業務アプリ（テスト観点アシスタント）本体としての側面は、次節「## このプロジェクトの見どころ」以下を参照。
 
 ---
 
