@@ -26,30 +26,33 @@
 
 ## アーキテクチャ：Claude Code 機能の連携
 
-前節の表（静的なカタログ）に対し、ここでは **Hook がいつ発火し、Skill / Subagent / MCP がどこで動くか** を 1 枚で示す。
-入力（Hook 注入）→ 実行（分業エージェント / 外部連携）→ 検証（pytest / CI）の 3 フェーズで読むと早い。
+前節の表が **静的なカタログ** であるのに対し、これは **連携・時系列ビュー**。
+入力（Hook 注入）→ 実行（分業エージェント / 外部連携）→ 検証（pytest / CI）の 3 フェーズで読む。
 
 ```mermaid
-flowchart TD
+flowchart LR
     User([👤 ユーザー])
     CC[Claude Code 本体]
-    CMD[CLAUDE.md<br/>ルール参照源]
+    CMD[CLAUDE.md]
 
-    subgraph IN ["① 入力フェーズ：Hook 注入"]
-        SS["SessionStart Hook<br/>日付・曜日を注入"]
-        UPS["UserPromptSubmit Hook<br/>git ブランチを注入"]
+    subgraph IN ["① 入力（Hook）"]
+        direction TB
+        SS["SessionStart Hook"]
+        UPS["UserPromptSubmit Hook"]
     end
 
-    subgraph EX ["② 実行フェーズ：分業エージェント / 外部連携"]
-        SK["Skills<br/>pytest-impl / design-to-code"]
-        SA["Subagents<br/>repo-explorer / test-designer<br/>reviewer / file-lister"]
-        MCPP["Playwright MCP<br/>外部・UI 操作"]
-        MCPS["skill-lister MCP<br/>自作・list_skills"]
+    subgraph EX ["② 実行（分業）"]
+        direction TB
+        SK["Skills"]
+        SA["Subagents"]
+        MCPP["Playwright MCP"]
+        MCPS["skill-lister MCP（自作）"]
     end
 
-    subgraph VR ["③ 検証フェーズ：自動テスト & CI"]
-        PTU["PostToolUse Hook<br/>.py 編集後に pytest"]
-        CI["GitHub Actions<br/>pytest + Claude 自動レビュー"]
+    subgraph VR ["③ 検証（CI）"]
+        direction TB
+        PTU["PostToolUse Hook"]
+        CI["GitHub Actions（CI）"]
     end
 
     User -- セッション開始 --> SS
@@ -65,13 +68,13 @@ flowchart TD
 
     SK -- .py 編集 --> PTU
     SA -- .py 編集 --> PTU
-    PTU -- 失敗時フィードバック --> CC
+    PTU -- 失敗時 --> CC
 
     User -- PR 作成 --> CI
     CI -. 結果通知 .-> User
 ```
 
-点線矢印は「都度発火ではなく参照／非同期通知」、実線矢印は「直接の発火・呼び出し」を表す。
+実線 = 直接の発火・呼び出し、点線 = 参照・非同期通知。各ノードの詳細名は前節の表を参照。
 
 ---
 
