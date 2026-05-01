@@ -24,6 +24,58 @@
 
 業務アプリ（テスト観点アシスタント）本体としての側面は、次節「## このプロジェクトの見どころ」以下を参照。
 
+## アーキテクチャ：Claude Code 機能の連携
+
+前節の表が **静的なカタログ** であるのに対し、これは **連携・時系列ビュー**。
+入力（Hook 注入）→ 実行（分業エージェント / 外部連携）→ 検証（pytest / CI）の 3 フェーズで読む。
+
+```mermaid
+flowchart LR
+    User([👤 ユーザー])
+    CC[Claude Code 本体]
+    CMD[CLAUDE.md]
+
+    subgraph IN ["① 入力（Hook）"]
+        direction TB
+        SS["SessionStart Hook"]
+        UPS["UserPromptSubmit Hook"]
+    end
+
+    subgraph EX ["② 実行（分業）"]
+        direction TB
+        SK["Skills"]
+        SA["Subagents"]
+        MCPP["Playwright MCP"]
+        MCPS["skill-lister MCP（自作）"]
+    end
+
+    subgraph VR ["③ 検証（CI）"]
+        direction TB
+        PTU["PostToolUse Hook"]
+        CI["GitHub Actions（CI）"]
+    end
+
+    User -- セッション開始 --> SS
+    User -- プロンプト送信 --> UPS
+    SS --> CC
+    UPS --> CC
+    CMD -. 常時参照 .-> CC
+
+    CC --> SK
+    CC --> SA
+    CC --> MCPP
+    CC --> MCPS
+
+    SK -- .py 編集 --> PTU
+    SA -- .py 編集 --> PTU
+    PTU -- 失敗時 --> CC
+
+    User -- PR 作成 --> CI
+    CI -. 結果通知 .-> User
+```
+
+実線 = 直接の発火・呼び出し、点線 = 参照・非同期通知。各ノードの詳細名は前節の表を参照。
+
 ---
 
 ## このプロジェクトの見どころ
